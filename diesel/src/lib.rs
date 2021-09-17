@@ -36,7 +36,7 @@ pub mod sqlite;
 use deadpool::managed;
 
 pub use deadpool::{
-    managed::{Pool, PoolConfig, Timeouts},
+    managed::{sync::InteractError, Pool, PoolConfig, Timeouts},
     Runtime,
 };
 
