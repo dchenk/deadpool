@@ -125,7 +125,7 @@ where
     ///
     /// Note: Anything you do with the object should be wrapped in a `spawn_blocking` closure
     /// so that the async runtime is not blocked.
-    pub async fn inner_obj(&self) -> Arc<Mutex<T>> {
+    pub fn inner_obj(&self) -> Arc<Mutex<T>> {
         self.obj.clone()
     }
 
