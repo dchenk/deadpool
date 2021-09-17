@@ -53,7 +53,7 @@ where
     T: Send + 'static,
     E: Send + 'static,
 {
-    obj: Arc<Mutex<Option<T>>>,
+    obj: Arc<Mutex<T>>,
     runtime: Runtime,
     _error: PhantomData<fn() -> E>,
 }
@@ -92,7 +92,7 @@ where
             Ok(obj) => obj,
         };
         result.map(|obj| Self {
-            obj: Arc::new(Mutex::new(Some(obj))),
+            obj: Arc::new(Mutex::new(obj)),
             runtime,
             _error: PhantomData::default(),
         })
@@ -111,9 +111,8 @@ where
         let arc = self.obj.clone();
         self.runtime
             .spawn_blocking(move || {
-                let mut guard = arc.lock().unwrap();
-                let conn = guard.as_mut().unwrap();
-                f(conn)
+                let mut conn = arc.lock().unwrap();
+                f(&mut *conn)
             })
             .await
             .map_err(|e| match e {
@@ -126,7 +125,7 @@ where
     ///
     /// Note: Anything you do with the object should be wrapped in a `spawn_blocking` closure
     /// so that the async runtime is not blocked.
-    pub async fn inner_obj(&self) -> Arc<Mutex<Option<T>>> {
+    pub async fn inner_obj(&self) -> Arc<Mutex<T>> {
         self.obj.clone()
     }
 
@@ -149,8 +148,8 @@ where
         // as the `drop` function of it can block.
         self.runtime
             .spawn_blocking_background(move || match arc.lock() {
-                Ok(mut guard) => drop(guard.take()),
-                Err(e) => drop(e.into_inner().take()),
+                Ok(guard) => drop(guard),
+                Err(e) => drop(e.into_inner()),
             })
             .unwrap();
     }
